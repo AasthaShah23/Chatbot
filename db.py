@@ -1,6 +1,9 @@
 from sqlalchemy import create_engine
+import os
+from dotenv import load_dotenv
 
-DATABASE_URL = "postgresql://aasthashah:hello@localhost:5432/Chatbot_RAG"
+load_dotenv()
 
+DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 

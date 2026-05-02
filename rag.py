@@ -9,41 +9,62 @@ load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+from sqlalchemy import text
+
 def search_similar(query):
     embedding = get_embedding(query)
 
-    # convert list → string format for pgvector
+    # convert list → pgvector string
     embedding_str = "[" + ",".join(map(str, embedding)) + "]"
 
     with engine.connect() as conn:
         result = conn.execute(
             text("""
-                SELECT content
-                FROM tech_notes
+                SELECT section, subsection, content
+                FROM resume_embeddings
                 ORDER BY embedding <-> CAST(:embedding AS vector)
                 LIMIT 5
             """),
             {"embedding": embedding_str}
         )
 
-        return [row[0] for row in result]
+        rows = result.fetchall()
+
+    # ✅ format context nicely
+    formatted_docs = []
+    for row in rows:
+        section, subsection, content = row
+
+        formatted = f"""
+Section: {section}
+Subsection: {subsection or "N/A"}
+Content: {content}
+"""
+        formatted_docs.append(formatted.strip())
+
+    return formatted_docs
 
 def generate_answer(query):
     docs = search_similar(query)
 
-    context = "\n".join(docs)
+    context = "\n\n---\n\n".join(docs)
 
     final_prompt = f"""
-You are a helpful assistant.
+You are an AI assistant answering questions about a candidate's professional background.
 
-Answer the question using ONLY the context below.
-
-Give a clear and complete sentence.
+STRICT RULES:
+- Answer ONLY from the provided context
+- Be specific and professional
+- Do NOT say "I don't know" if answer exists in context
+- Do NOT give generic AI answers
+- Keep answer concise but complete
 
 Context:
 {context}
 
 Question: {query}
+
+Answer:
 """
 
     response = client.models.generate_content(
@@ -53,15 +74,21 @@ Question: {query}
 
     return response.text
 
-def insert_note(content):
-    embedding = get_embedding(content)
+
+def insert_resume(entry):
+    embedding = get_embedding(entry.content)
 
     with engine.connect() as conn:
         conn.execute(
             text("""
-                INSERT INTO tech_notes (content, embedding)
-                VALUES (:content, :embedding)
+                INSERT INTO resume_embeddings (section, subsection, content, embedding)
+                VALUES (:section, :subsection, :content, :embedding)
             """),
-            {"content": content, "embedding": embedding}
+            {
+                "section": entry.section,
+                "subsection": entry.subsection,
+                "content": entry.content,
+                "embedding": embedding
+            }
         )
         conn.commit()
