@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from rag import generate_answer, insert_note
+from typing import Optional
+from rag import generate_answer, insert_resume
 
 app = FastAPI()
 
-class Note(BaseModel):
+class ResumeContent(BaseModel):
+    section: str
+    subsection: Optional[str] = None
     content: str
 
 @app.get("/")
@@ -13,8 +16,8 @@ def home():
 
 
 @app.post("/add-note")
-def add_note(note: Note):
-    insert_note(note.content)
+def add_note(note: ResumeContent):
+    insert_resume(note)
     return {"message": "Note added successfully"}
 
 @app.get("/chat")
