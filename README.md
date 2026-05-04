@@ -32,9 +32,8 @@ Instead of hardcoded responses, this chatbot retrieves relevant information from
 ├── db.py                # Database connection
 ├── embeddings.py        # Embedding generation logic
 ├── rag.py               # Retrieval logic (similarity search)
-├── main.py              # FastAPI app
-├── .env                 # Environment variables
-├── .env.example
+├── main.py              # FastAPI app     
+├── .env.example         # Environment variables
 ├── requirements.txt
 └── README.md
 ```
@@ -211,7 +210,7 @@ POST /add-note
 {
   "section": "experience",
   "subsection": "backend",
-  "content": "Add context according to you"
+  "content": "Add context according to your data"
 }
 ```
 
@@ -282,14 +281,3 @@ POST /chat
 * Use clear, descriptive language
 
 ---
-
-## 📌 Author
-
-**Aastha Shah**
-Backend Developer | AI Enthusiast
-
----
-
-## ⭐ If this helped you
-
-Give it a ⭐ on GitHub!
